@@ -43,43 +43,40 @@ class GalaxyTrader {
 
     /**
      * Respond to a particular question.
-     * @param questions the question asked
+     * @param question the question asked
      * @return the response to be provided
      */
-    String respond(String questions) {
+    String respond(String question) {
         try {
-            List<String> response = getResponse(questions);
-            if (response.isEmpty()) {
-                return NO_IDEA;
-            }
-            getMetalOptional(questions).ifPresent(response::add);
+            List<String> response = getResponse(question);
+            getMetalOptional(question).ifPresent(response::add);
 
             StringBuilder sb = new StringBuilder(String.join(SPACE, response));
-            Optional<Expr> respStr = parse(questions, response);
+            Optional<Expr> respStr = parse(question, response);
 
             respStr.ifPresent(r -> sb.append(SPACE).append(r.interpret(context)));
             return sb.toString();
 
         } catch (IllegalArgumentException e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
-            return NO_IDEA;
+            return NO_IDEA_RESPONSE;
         }
     }
 
-    private Optional<String> getMetalOptional(String questions) {
-        return Arrays.stream(questions.split(SPACE)).filter(s -> metalSingleUnitMap.containsKey(s)).findAny();
+    private Optional<String> getMetalOptional(String question) {
+        return Arrays.stream(question.split(SPACE)).filter(s -> metalSingleUnitMap.containsKey(s)).findAny();
     }
 
-    private Optional<Expr> parse(String questions, List<String> response) {
+    private Optional<Expr> parse(String question, List<String> response) {
         List<Expr> respExpr = getRespExprList(response);
 
-        return Arrays.stream(Questions.values()).filter(q -> questions.startsWith(q.getDisplayValue())).findFirst()
+        return Arrays.stream(Questions.values()).filter(q -> question.startsWith(q.getDisplayValue())).findFirst()
                 .map(q -> {
                     switch (q) {
                         case HOW_MUCH_IS:
                             return Expr.howMuchIs(Expr.variable(q.getDisplayValue()), respExpr);
                         case HOW_MANY_CREDIT_IS:
-                            String metal = getMetalOptional(questions).orElseThrow(() -> new IllegalArgumentException("Metal not provided or invalid"));
+                            String metal = getMetalOptional(question).orElseThrow(() -> new IllegalArgumentException("Metal not provided or invalid"));
                             return Expr.howManyCreditIs(Expr.variable(q.getDisplayValue()), respExpr, getMetalSingleUnit(metal));
                     }
                     return null;
@@ -100,8 +97,12 @@ class GalaxyTrader {
         return NumberUtils.isCreatable(interpret) ? new BigDecimal(interpret) : BigDecimal.ONE;
     }
 
-    private List<String> getResponse(String questions) {
-        return Arrays.stream(questions.split(SPACE)).filter(s -> context.containsKey(s)).collect(Collectors.toList());
+    private List<String> getResponse(String question) {
+        List<String> response = Arrays.stream(question.split(SPACE)).filter(s -> context.containsKey(s)).collect(Collectors.toList());
+        if (response.isEmpty()) {
+            throw new IllegalArgumentException("Could not interpret question:" + question);
+        }
+        return response;
     }
 
     private void initContextMaps(List<String> input) {

@@ -9,5 +9,5 @@ public class CommonText {
     public static final String CREDITS = "Credits";
     public static final String IS = "is";
     public static final String IS_SPACE = SPACE + IS + SPACE;
-    public static final String NO_IDEA = "I have no idea what you are talking about";
+    public static final String NO_IDEA_RESPONSE = "I have no idea what you are talking about";
 }
