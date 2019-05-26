@@ -1,4 +1,4 @@
-package galaxy;
+package galaxy.questions;
 
 /**
  * The questions asked by aliens

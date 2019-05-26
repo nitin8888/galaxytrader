@@ -1,6 +1,8 @@
 package galaxy;
 
-import galaxy.roman.RomanToNumberUtil;
+import galaxy.questions.HowManyCreditIs;
+import galaxy.questions.HowMuchIs;
+import galaxy.questions.Questions;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.math.BigDecimal;
@@ -14,6 +16,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static galaxy.common.CommonText.*;
+import static galaxy.util.ConversionUtil.intergalacticUnitToDecimal;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 
 /**
@@ -74,10 +77,10 @@ class GalaxyTrader {
                 .map(q -> {
                     switch (q) {
                         case HOW_MUCH_IS:
-                            return Expr.howMuchIs(Expr.variable(q.getDisplayValue()), respExpr);
+                            return HowMuchIs.question(Expr.variable(q.getDisplayValue()), respExpr);
                         case HOW_MANY_CREDIT_IS:
                             String metal = getMetalOptional(question).orElseThrow(() -> new IllegalArgumentException("Metal not provided or invalid"));
-                            return Expr.howManyCreditIs(Expr.variable(q.getDisplayValue()), respExpr, getMetalSingleUnit(metal));
+                            return HowManyCreditIs.question(Expr.variable(q.getDisplayValue()), respExpr, getMetalSingleUnit(metal));
                     }
                     return null;
                 });
@@ -85,11 +88,6 @@ class GalaxyTrader {
 
     private List<Expr> getRespExprList(List<String> response) {
         return response.stream().map(Expr::variable).collect(Collectors.toList());
-    }
-
-    private int intergalacticUnitToDecimal(List<String> words) {
-        String roman = words.stream().map(s -> Expr.variable(s).interpret(context)).collect(Collectors.joining());
-        return RomanToNumberUtil.convert(roman);
     }
 
     private BigDecimal getMetalSingleUnit(String metal) {
@@ -118,7 +116,7 @@ class GalaxyTrader {
         String[] keySplit = entry.getKey().split(SPACE);
         String[] nosUnits = entry.getValue().split(SPACE);
         int numerator = Integer.parseInt(nosUnits[0]);
-        int denominator = intergalacticUnitToDecimal(Arrays.asList(keySplit));
+        int denominator = intergalacticUnitToDecimal(Arrays.asList(keySplit), context);
         return BigDecimal.valueOf(numerator).divide(BigDecimal.valueOf(denominator), 5, RoundingMode.HALF_UP).toPlainString();
     }
 }
